@@ -130,7 +130,6 @@ pub enum MediaMulTy {
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[non_exhaustive]
 pub enum Instr {
-    Nop,
     Mrs {
         spsr: bool,
     },
@@ -290,7 +289,7 @@ const fn decode_arm_cond(instr: u32, proc: Processor) -> Instr {
                 Instr::Bkpt
             }
             8 | 0xA | 0xC | 0xE => {
-                if proc.has_enhanced_dsp() {
+                if proc.has_enhanced_dsp() || proc.has_nop_dsp_multiplies() {
                     Instr::DspMul(match instr >> 21 & 3 {
                         0 => DspMulTy::Smulxy { acc: true },
                         1 => DspMulTy::Smulwy {
@@ -299,8 +298,6 @@ const fn decode_arm_cond(instr: u32, proc: Processor) -> Instr {
                         2 => DspMulTy::Smlalxy,
                         _ => DspMulTy::Smulxy { acc: false },
                     })
-                } else if proc.has_nop_dsp_multiplies() {
-                    Instr::Nop
                 } else {
                     Instr::Undefined { stable: false }
                 }
